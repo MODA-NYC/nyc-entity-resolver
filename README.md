@@ -169,16 +169,20 @@ results = matcher.batch(["DOF", "Dept. of Finance", "NYC Sanitation", "XYZ"])
 
 ## Web UI
 
-The web UI in [`web/index.html`](web/index.html) is a single-file app that
+The web UI in [`docs/index.html`](docs/index.html) is a single-file app that
 runs everything client-side: it fetches the canonical dataset from Socrata,
 runs the same matching pipeline in JavaScript, and exports a crosswalk CSV
 from your browser. **No uploaded data ever leaves the browser.**
 
-To use it locally, serve the `web/` directory over HTTP (fetching from
+It lives under `docs/` so GitHub Pages can publish it directly from the
+`main` branch (Settings → Pages → Source → Deploy from branch → `main` /
+`/docs`) without needing a custom Actions workflow.
+
+To use it locally, serve the `docs/` directory over HTTP (fetching from
 Socrata requires an HTTP origin rather than `file://`):
 
 ```bash
-python -m http.server --directory web 8080
+python -m http.server --directory docs 8080
 # open http://localhost:8080
 ```
 
