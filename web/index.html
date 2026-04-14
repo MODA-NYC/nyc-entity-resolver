@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NYC Entity Resolver</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a1a;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --panel: #f9fafb;
+    --accent: #1e40af;
+    --accent-fg: #ffffff;
+    --tier-exact: #059669;
+    --tier-high: #10b981;
+    --tier-medium: #d97706;
+    --tier-low: #dc2626;
+    --tier-none: #6b7280;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      Helvetica, Arial, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    line-height: 1.5;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px;
+    background: var(--panel);
+  }
+  header h1 { margin: 0 0 4px; font-size: 22px; }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  header p a { color: var(--accent); text-decoration: none; }
+  header p a:hover { text-decoration: underline; }
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  section { margin-bottom: 24px; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  .panel {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    background: var(--panel);
+  }
+  .row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .row + .row { margin-top: 12px; }
+  button {
+    cursor: pointer;
+    font: inherit;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: #fff;
+  }
+  button.primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border-color: var(--accent);
+  }
+  button.primary:hover { background: #1e3a8a; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  textarea, input[type="text"], select, input[type="number"] {
+    font: inherit;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: #fff;
+  }
+  textarea { width: 100%; min-height: 120px; resize: vertical; }
+  label { font-size: 14px; color: var(--muted); }
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .tab {
+    padding: 8px 14px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+  }
+  .tab.active { color: var(--fg); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .status { font-size: 13px; color: var(--muted); }
+  .status.error { color: var(--tier-low); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    padding: 6px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    background: var(--panel);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+  }
+  td.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+  .tier-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .tier-exact { background: var(--tier-exact); }
+  .tier-high { background: var(--tier-high); }
+  .tier-medium { background: var(--tier-medium); }
+  .tier-low { background: var(--tier-low); }
+  .tier-none { background: var(--tier-none); }
+  .results-wrap {
+    max-height: 520px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .summary {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .summary span b { color: var(--fg); }
+  footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>NYC Entity Resolver</h1>
+  <p>
+    Reconcile agency names against the
+    <a href="https://data.cityofnewyork.us/City-Government/NYC-Governance-Organizations/t3jq-9nkf"
+       target="_blank" rel="noopener">canonical NYC Governance Organizations dataset</a>.
+    All processing happens in your browser — no data is uploaded anywhere.
+  </p>
+</header>
+
+<main>
+  <section>
+    <h2>1. Canonical dataset</h2>
+    <div class="panel row">
+      <button id="load-canonical" class="primary">Load canonical dataset</button>
+      <span id="canonical-status" class="status">Not yet loaded.</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Input values</h2>
+    <div class="panel">
+      <div class="tabs">
+        <button class="tab active" data-tab="paste">Paste values</button>
+        <button class="tab" data-tab="upload">Upload CSV / TSV</button>
+      </div>
+
+      <div class="tab-panel active" data-tab="paste">
+        <label for="paste-values">One value per line</label>
+        <textarea id="paste-values" placeholder="DOF&#10;Dept of Finance&#10;NYC Sanitation"></textarea>
+      </div>
+
+      <div class="tab-panel" data-tab="upload">
+        <div class="row">
+          <input type="file" id="csv-file" accept=".csv,.tsv,text/csv,text/tab-separated-values">
+        </div>
+        <div class="row" id="csv-column-row" style="display:none">
+          <label for="csv-column">Column to match</label>
+          <select id="csv-column"></select>
+        </div>
+        <div class="hint" id="csv-hint"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Match settings</h2>
+    <div class="panel row">
+      <label for="min-score">Minimum confidence</label>
+      <input type="number" id="min-score" min="0" max="100" step="1" value="0">
+      <span class="hint">Rows below this score are shown as "no match".</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="row">
+      <button id="run-match" class="primary" disabled>Run matcher</button>
+      <button id="export-csv" disabled>Export crosswalk CSV</button>
+      <span id="match-status" class="status"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Results</h2>
+    <div class="summary" id="summary"></div>
+    <div class="results-wrap">
+      <table id="results-table">
+        <thead>
+          <tr>
+            <th>Input</th>
+            <th>Canonical name</th>
+            <th>Acronym</th>
+            <th>Matched variant</th>
+            <th class="numeric">Score</th>
+            <th>Tier</th>
+            <th>Match type</th>
+            <th>Review?</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer>
+  A project of
+  <a href="https://www.nyc.gov/site/oda/index.page" target="_blank" rel="noopener">NYC's Office of Data Analytics</a>.
+  Source code on
+  <a href="https://github.com/MODA-NYC/nyc-entity-resolver" target="_blank" rel="noopener">GitHub</a>.
+</footer>
+
+<script>
+"use strict";
+
+//
+// --- Abbreviations & stopwords (ported from nycresolver.abbreviations) -------
+//
+const ABBREVIATIONS = {
+  dept: "department", depts: "departments", div: "division", divs: "divisions",
+  ofc: "office", ofcs: "offices", off: "office",
+  admin: "administration", admn: "administration", auth: "authority",
+  bd: "board", brd: "board", bldg: "building", bur: "bureau",
+  comm: "commission", commn: "commission", cmsn: "commission",
+  cncl: "council", cnsl: "council", corp: "corporation",
+  ctte: "committee", cmte: "committee", cmt: "committee",
+  ctr: "center", cntr: "center", fdn: "foundation", inst: "institute",
+  acad: "academy", agr: "agriculture", comms: "communications",
+  comp: "comptroller", dev: "development", devt: "development",
+  ed: "education", educ: "education", emerg: "emergency",
+  env: "environmental", envir: "environmental", envt: "environment",
+  fin: "finance", gen: "general", govt: "government", gov: "government",
+  hlth: "health", hsg: "housing", hr: "human resources",
+  info: "information", intl: "international", invest: "investigation",
+  mgmt: "management", mgt: "management", mkts: "markets",
+  oper: "operations", ops: "operations", plng: "planning",
+  pres: "preservation", prot: "protection", pub: "public",
+  rec: "recreation", res: "resources",
+  svc: "service", svcs: "services", serv: "service", servs: "services",
+  tech: "technology", trans: "transportation", transp: "transportation",
+  trnsp: "transportation", util: "utility", mgr: "manager", ofcr: "officer",
+  bklyn: "brooklyn", bx: "bronx", mnhtn: "manhattan", qns: "queens",
+  si: "staten island", nyc: "new york city", ny: "new york",
+  us: "united states", usa: "united states",
+};
+
+const STOPWORDS = new Set([
+  "of", "and", "the", "for", "a", "an", "in", "on", "to", "at",
+  "or", "by", "with", "into", "from",
+]);
+
+const SYMBOL_REWRITES = {
+  "&": " and ", "@": " at ", "/": " ", "-": " ", "_": " ",
+  ".": " ", ",": " ", ";": " ", ":": " ", "(": " ", ")": " ",
+  "'": "", "\"": "",
+};
+
+//
+// --- Normalization & scoring -------------------------------------------------
+//
+function rewriteSymbols(text) {
+  let out = text;
+  for (const [sym, rep] of Object.entries(SYMBOL_REWRITES)) {
+    if (out.indexOf(sym) !== -1) {
+      out = out.split(sym).join(rep);
+    }
+  }
+  return out;
+}
+
+function expandAbbreviations(text) {
+  return text.replace(/[A-Za-z0-9]+/g, (word) => {
+    const expansion = ABBREVIATIONS[word.toLowerCase()];
+    return expansion == null ? word : expansion;
+  });
+}
+
+function normalize(text) {
+  if (!text) return "";
+  return rewriteSymbols(text).toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function normalizeExpanded(text) {
+  if (!text) return "";
+  return normalize(expandAbbreviations(text));
+}
+
+function tokens(text) {
+  const n = normalize(text);
+  return n ? n.split(" ") : [];
+}
+
+function tokensExpanded(text) {
+  const n = normalizeExpanded(text);
+  return n ? n.split(" ") : [];
+}
+
+function sortedNormalizedExpanded(text) {
+  return tokensExpanded(text).slice().sort().join(" ");
+}
+
+function sortedMeaningfulExpanded(text) {
+  return tokensExpanded(text).filter((t) => !STOPWORDS.has(t)).sort().join(" ");
+}
+
+function levenshteinDistance(s1, s2) {
+  if (s1 === s2) return 0;
+  if (!s1) return s2.length;
+  if (!s2) return s1.length;
+  if (s1.length > s2.length) { [s1, s2] = [s2, s1]; }
+  let prev = new Array(s1.length + 1);
+  for (let i = 0; i <= s1.length; i++) prev[i] = i;
+  let cur = new Array(s1.length + 1);
+  for (let i = 1; i <= s2.length; i++) {
+    cur[0] = i;
+    const c2 = s2.charCodeAt(i - 1);
+    for (let j = 1; j <= s1.length; j++) {
+      const cost = s1.charCodeAt(j - 1) === c2 ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+    }
+    [prev, cur] = [cur, prev];
+  }
+  return prev[s1.length];
+}
+
+function ratioFromDistance(a, b) {
+  if (!a && !b) return 1.0;
+  if (!a || !b) return 0.0;
+  const d = levenshteinDistance(a, b);
+  return 1 - d / Math.max(a.length, b.length);
+}
+
+function levenshteinRatio(a, b) { return ratioFromDistance(normalize(a), normalize(b)); }
+function abbreviationExpandedRatio(a, b) { return ratioFromDistance(normalizeExpanded(a), normalizeExpanded(b)); }
+
+function tokenSortRatio(a, b) {
+  return ratioFromDistance(
+    tokens(a).slice().sort().join(" "),
+    tokens(b).slice().sort().join(" "),
+  );
+}
+
+function tokenSortExpandedRatio(a, b) {
+  return ratioFromDistance(
+    tokensExpanded(a).slice().sort().join(" "),
+    tokensExpanded(b).slice().sort().join(" "),
+  );
+}
+
+function jaccardMeaningful(a, b) {
+  const ta = new Set(tokensExpanded(a).filter((t) => !STOPWORDS.has(t)));
+  const tb = new Set(tokensExpanded(b).filter((t) => !STOPWORDS.has(t)));
+  if (!ta.size && !tb.size) return 1.0;
+  if (!ta.size || !tb.size) return 0.0;
+  let intersection = 0;
+  const union = new Set([...ta, ...tb]);
+  ta.forEach((t) => { if (tb.has(t)) intersection++; });
+  return intersection / union.size;
+}
+
+function containsBonus(a, b) {
+  const na = normalize(a), nb = normalize(b);
+  if (!na || !nb) return 0.0;
+  const [shorter, longer] = na.length <= nb.length ? [na, nb] : [nb, na];
+  return longer.indexOf(shorter) !== -1 ? shorter.length / longer.length : 0.0;
+}
+
+function generatedAcronym(text) {
+  const parts = [];
+  for (const tok of normalize(text).split(" ")) {
+    if (!tok || STOPWORDS.has(tok)) continue;
+    parts.push(tok[0]);
+  }
+  return parts.join("");
+}
+
+const WEIGHTS = {
+  levenshtein: 0.20,
+  token_sort: 0.15,
+  token_sort_expanded: 0.30,
+  abbreviation_expanded: 0.15,
+  jaccard_meaningful: 0.10,
+  contains_bonus: 0.10,
+};
+const SCORE_ABBREVIATION_EXPANSION = 97.0;
+const SCORE_ABBREVIATION_EXPANSION_LOOSE = 95.0;
+const SCORE_GENERATED_ACRONYM = 92.0;
+const TIER_EXACT = 100, TIER_HIGH = 85, TIER_MEDIUM = 65, TIER_LOW = 45;
+
+function confidenceTier(score) {
+  if (score >= TIER_EXACT) return "exact";
+  if (score >= TIER_HIGH) return "high";
+  if (score >= TIER_MEDIUM) return "medium";
+  if (score >= TIER_LOW) return "low";
+  return "none";
+}
+
+function compositeScore(a, b) {
+  const s =
+    WEIGHTS.levenshtein * levenshteinRatio(a, b) +
+    WEIGHTS.token_sort * tokenSortRatio(a, b) +
+    WEIGHTS.token_sort_expanded * tokenSortExpandedRatio(a, b) +
+    WEIGHTS.abbreviation_expanded * abbreviationExpandedRatio(a, b) +
+    WEIGHTS.jaccard_meaningful * jaccardMeaningful(a, b) +
+    WEIGHTS.contains_bonus * containsBonus(a, b);
+  return Math.max(0, Math.min(1, s));
+}
+
+//
+// --- Canonical record indexing -----------------------------------------------
+//
+function splitAlternates(value) {
+  if (!value) return [];
+  return String(value).split(";").map((s) => s.trim()).filter(Boolean);
+}
+
+function canonicalFromRow(row) {
+  return {
+    record_id: String(row.record_id || ""),
+    name: String(row.name || ""),
+    acronym: String(row.acronym || ""),
+    name_alphabetized: String(row.name_alphabetized || ""),
+    alternate_names: splitAlternates(row.alternate_or_former_names),
+    alternate_acronyms: splitAlternates(row.alternate_or_former_acronyms),
+    operational_status: String(row.operational_status || ""),
+  };
+}
+
+function indexRecord(rec) {
+  const variants = [];
+  const seen = new Set();
+  const add = (original, kind) => {
+    const n = normalize(original);
+    if (!n || seen.has(n)) return;
+    seen.add(n);
+    variants.push({
+      original,
+      normalized: n,
+      sortedExpanded: sortedNormalizedExpanded(original),
+      sortedMeaningful: sortedMeaningfulExpanded(original),
+      derivedAcronym: generatedAcronym(original),
+      kind,
+    });
+  };
+  add(rec.name, "name");
+  add(rec.name_alphabetized, "alphabetized");
+  rec.alternate_names.forEach((alt) => add(alt, "alternate_name"));
+
+  const acronymEntries = [];
+  if (rec.acronym) acronymEntries.push({ normalized: normalize(rec.acronym), kind: "acronym" });
+  rec.alternate_acronyms.forEach((a) =>
+    acronymEntries.push({ normalized: normalize(a), kind: "alternate_acronym" })
+  );
+  return { record: rec, variants, acronyms: acronymEntries.filter((a) => a.normalized) };
+}
+
+function statusRank(rec) {
+  const s = (rec.operational_status || "").trim().toLowerCase();
+  if (s === "active") return 2;
+  if (s) return 1;
+  return 0;
+}
+
+function matchOne(input, index, minScore) {
+  const result = {
+    input_value: input,
+    best: null,
+    runners_up: [],
+  };
+  const normInput = normalize(input);
+  if (!normInput) return result;
+  const sortedExpandedInput = sortedNormalizedExpanded(input);
+  const sortedMeaningfulInput = sortedMeaningfulExpanded(input);
+  const compactInput = normInput.replace(/ /g, "");
+
+  const candidates = [];
+  for (const ix of index) {
+    let best = 0;
+    let variant = "";
+    let kind = "";
+
+    let acronymHit = false;
+    for (const a of ix.acronyms) {
+      if (a.normalized === normInput || a.normalized === compactInput) {
+        candidates.push({
+          record: ix.record,
+          matched_variant: a.kind === "acronym"
+            ? ix.record.acronym
+            : ix.record.alternate_acronyms.join(", "),
+          confidence_score: 100,
+          match_type: a.kind === "acronym" ? "exact_acronym" : "exact_alternate_acronym",
+        });
+        acronymHit = true;
+        break;
+      }
+    }
+    if (acronymHit) continue;
+
+    let exactHit = false;
+    for (const v of ix.variants) {
+      if (v.normalized === normInput) {
+        const mt = v.kind === "name" ? "exact_name"
+                  : v.kind === "alphabetized" ? "exact_alphabetized"
+                  : "exact_alternate_name";
+        candidates.push({
+          record: ix.record,
+          matched_variant: v.original,
+          confidence_score: 100,
+          match_type: mt,
+        });
+        exactHit = true;
+        break;
+      }
+      if (v.sortedExpanded && v.sortedExpanded === sortedExpandedInput) {
+        const score = SCORE_ABBREVIATION_EXPANSION;
+        if (score > best) { best = score; variant = v.original; kind = "abbreviation_expansion"; }
+        continue;
+      }
+      if (v.sortedMeaningful && sortedMeaningfulInput && v.sortedMeaningful === sortedMeaningfulInput) {
+        const score = SCORE_ABBREVIATION_EXPANSION_LOOSE;
+        if (score > best) { best = score; variant = v.original; kind = "abbreviation_expansion"; }
+        continue;
+      }
+      if (v.derivedAcronym && v.derivedAcronym === compactInput) {
+        const score = SCORE_GENERATED_ACRONYM;
+        if (score > best) { best = score; variant = v.original; kind = "generated_acronym"; }
+        continue;
+      }
+      const score = compositeScore(input, v.original) * 100;
+      if (score > best) { best = score; variant = v.original; kind = "fuzzy"; }
+    }
+    if (exactHit) continue;
+    if (best > 0) {
+      candidates.push({
+        record: ix.record,
+        matched_variant: variant,
+        confidence_score: Math.round(best * 100) / 100,
+        match_type: kind,
+      });
+    }
+  }
+
+  candidates.sort((x, y) => {
+    if (y.confidence_score !== x.confidence_score) return y.confidence_score - x.confidence_score;
+    return statusRank(y.record) - statusRank(x.record);
+  });
+
+  if (!candidates.length) return result;
+  const top = candidates[0];
+  if (top.confidence_score < minScore) {
+    result.runners_up = candidates.slice(0, 2);
+    return result;
+  }
+  result.best = top;
+  result.runners_up = candidates.slice(1, 3);
+  return result;
+}
+
+//
+// --- UI state ---------------------------------------------------------------
+//
+const state = {
+  canonical: null,
+  index: null,
+  results: null,
+  csvRows: null,
+  csvHeaders: null,
+};
+
+const $ = (id) => document.getElementById(id);
+
+async function loadCanonical() {
+  const btn = $("load-canonical");
+  const status = $("canonical-status");
+  btn.disabled = true;
+  status.className = "status";
+  status.textContent = "Fetching canonical dataset…";
+  try {
+    const response = await fetch(
+      "https://data.cityofnewyork.us/resource/t3jq-9nkf.json?$limit=5000"
+    );
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const rows = await response.json();
+    state.canonical = rows.map(canonicalFromRow);
+    state.index = state.canonical.map(indexRecord);
+    status.textContent = `Loaded ${state.canonical.length} records.`;
+    $("run-match").disabled = false;
+  } catch (err) {
+    status.className = "status error";
+    status.textContent = `Failed to load canonical dataset: ${err.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function setupTabs() {
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t === tab));
+      const target = tab.dataset.tab;
+      document.querySelectorAll(".tab-panel").forEach((p) => {
+        p.classList.toggle("active", p.dataset.tab === target);
+      });
+    });
+  });
+}
+
+function parseCSVText(text) {
+  // Minimal CSV parser supporting quoted fields and comma/tab delimiter detection.
+  const firstLine = text.split(/\r?\n/, 1)[0] || "";
+  const delimiter = firstLine.split("\t").length > firstLine.split(",").length ? "\t" : ",";
+  const rows = [];
+  let cur = [""];
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { cur[cur.length - 1] += '"'; i++; }
+        else { inQuotes = false; }
+      } else {
+        cur[cur.length - 1] += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === delimiter) {
+      cur.push("");
+    } else if (ch === "\n") {
+      rows.push(cur);
+      cur = [""];
+    } else if (ch === "\r") {
+      // ignore
+    } else {
+      cur[cur.length - 1] += ch;
+    }
+  }
+  if (cur.length > 1 || cur[0] !== "") rows.push(cur);
+  if (!rows.length) return { headers: [], rows: [] };
+  const headers = rows[0].map((h) => h.trim());
+  const dataRows = rows.slice(1).filter((r) => r.some((c) => c !== ""));
+  return { headers, rows: dataRows };
+}
+
+async function handleFile(file) {
+  const text = await file.text();
+  const { headers, rows } = parseCSVText(text);
+  state.csvHeaders = headers;
+  state.csvRows = rows;
+  const select = $("csv-column");
+  select.innerHTML = "";
+  headers.forEach((h) => {
+    const opt = document.createElement("option");
+    opt.value = h;
+    opt.textContent = h;
+    select.appendChild(opt);
+  });
+  $("csv-column-row").style.display = headers.length ? "flex" : "none";
+  $("csv-hint").textContent = `${rows.length} data rows loaded.`;
+}
+
+function getInputValues() {
+  const activeTab = document.querySelector(".tab.active").dataset.tab;
+  if (activeTab === "paste") {
+    return $("paste-values").value
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  if (!state.csvRows || !state.csvHeaders) return [];
+  const col = $("csv-column").value;
+  const idx = state.csvHeaders.indexOf(col);
+  if (idx < 0) return [];
+  return state.csvRows.map((r) => (r[idx] || "").trim());
+}
+
+function renderResults(results) {
+  const tbody = document.querySelector("#results-table tbody");
+  tbody.innerHTML = "";
+  const summary = { total: 0, exact: 0, high: 0, medium: 0, low: 0, none: 0 };
+  for (const r of results) {
+    const tr = document.createElement("tr");
+    const best = r.best;
+    const tier = best ? confidenceTier(best.confidence_score) : "none";
+    summary.total++;
+    summary[tier]++;
+    const needsReview = !best || best.confidence_score < TIER_HIGH;
+    tr.innerHTML = `
+      <td>${escapeHtml(r.input_value)}</td>
+      <td>${best ? escapeHtml(best.record.name) : ""}</td>
+      <td>${best ? escapeHtml(best.record.acronym || "") : ""}</td>
+      <td>${best ? escapeHtml(best.matched_variant) : ""}</td>
+      <td class="numeric">${best ? best.confidence_score.toFixed(2) : "0.00"}</td>
+      <td><span class="tier-badge tier-${tier}">${tier}</span></td>
+      <td>${best ? best.match_type : "no_match"}</td>
+      <td>${needsReview ? "yes" : "no"}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+  $("summary").innerHTML = `
+    <span>Total: <b>${summary.total}</b></span>
+    <span>Exact: <b>${summary.exact}</b></span>
+    <span>High: <b>${summary.high}</b></span>
+    <span>Medium: <b>${summary.medium}</b></span>
+    <span>Low: <b>${summary.low}</b></span>
+    <span>No match: <b>${summary.none}</b></span>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
+function runMatch() {
+  if (!state.index) return;
+  const inputs = getInputValues();
+  if (!inputs.length) {
+    $("match-status").textContent = "No input values to match.";
+    return;
+  }
+  const minScore = parseFloat($("min-score").value) || 0;
+  const started = performance.now();
+  state.results = inputs.map((v) => matchOne(v, state.index, minScore));
+  const elapsed = (performance.now() - started).toFixed(0);
+  $("match-status").textContent = `Matched ${inputs.length} values in ${elapsed} ms.`;
+  renderResults(state.results);
+  $("export-csv").disabled = false;
+}
+
+function csvCell(value) {
+  const s = String(value ?? "");
+  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function exportCSV() {
+  if (!state.results) return;
+  const headers = [
+    "input_value", "matched_canonical_name", "matched_acronym",
+    "matched_record_id", "matched_variant", "confidence_score",
+    "confidence_tier", "match_type", "needs_review",
+  ];
+  const lines = [headers.join(",")];
+  for (const r of state.results) {
+    const best = r.best;
+    const tier = best ? confidenceTier(best.confidence_score) : "none";
+    const needsReview = !best || best.confidence_score < TIER_HIGH;
+    lines.push([
+      csvCell(r.input_value),
+      csvCell(best ? best.record.name : ""),
+      csvCell(best ? best.record.acronym : ""),
+      csvCell(best ? best.record.record_id : ""),
+      csvCell(best ? best.matched_variant : ""),
+      csvCell(best ? best.confidence_score.toFixed(2) : ""),
+      csvCell(tier),
+      csvCell(best ? best.match_type : "no_match"),
+      csvCell(needsReview ? "true" : "false"),
+    ].join(","));
+  }
+  const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "nyc-entity-crosswalk.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+//
+// --- Wire up UI --------------------------------------------------------------
+//
+document.addEventListener("DOMContentLoaded", () => {
+  setupTabs();
+  $("load-canonical").addEventListener("click", loadCanonical);
+  $("run-match").addEventListener("click", runMatch);
+  $("export-csv").addEventListener("click", exportCSV);
+  $("csv-file").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) handleFile(file);
+  });
+});
+</script>
+</body>
+</html>

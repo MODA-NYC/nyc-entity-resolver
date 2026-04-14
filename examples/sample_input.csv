@@ -1,0 +1,29 @@
+row_id,agency_name,fiscal_year,notes
+1,Department of Finance,2024,exact name
+2,DOF,2024,exact acronym
+3,Finance Dept,2024,abbreviation
+4,Dept. of Finance,2024,abbreviation with punctuation
+5,"Finance, Dept of",2024,word reordering + abbreviation
+6,Department of finance,2024,case variant
+7,Deparment of Finance,2024,one-letter typo
+8,NYC Finance Department,2024,alternate name variant
+9,DSNY,2024,acronym for sanitation
+10,Dept of Sanitation,2024,abbreviation sanitation
+11,NYC Sanitation,2024,alternate name match
+12,DOS,2024,alternate acronym
+13,Department of Education,2024,DOE exact
+14,NYC Public Schools,2024,DOE alt
+15,NYPD,2024,police acronym
+16,Fire Dept,2024,abbreviation
+17,Department of Health & Mental Hygiene,2024,ampersand
+18,DOH,2024,alt acronym for health
+19,Mayor's Office of Climate & Environmental Justice,2024,MOCEJ ampersand
+20,MOCEJ,2024,MOCEJ exact
+21,DCAS,2024,citywide admin services
+22,Dept of Citywide Admin Services,2024,heavy abbreviation
+23,FDM,2024,first deputy mayor
+24,DOB,2024,buildings
+25,NYC Buildings,2024,alt name buildings
+26,Schrödinger's Department,2024,no match
+27,,2024,empty input
+28,XYZ Agency,2024,no match

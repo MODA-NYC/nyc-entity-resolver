@@ -1,0 +1,29 @@
+input_value,matched_canonical_name,matched_acronym,matched_record_id,matched_variant,confidence_score,confidence_tier,match_type,needs_review
+Department of Finance,Department of Finance,DOF,NYC_GOID_TEST_001,Department of Finance,100.00,exact,exact_name,false
+DOF,Department of Finance,DOF,NYC_GOID_TEST_001,DOF,100.00,exact,exact_acronym,false
+Finance Dept,Department of Finance,DOF,NYC_GOID_TEST_001,Department of Finance,95.00,high,abbreviation_expansion,false
+Dept. of Finance,Department of Finance,DOF,NYC_GOID_TEST_001,Department of Finance,97.00,high,abbreviation_expansion,false
+"Finance, Dept of",Department of Finance,DOF,NYC_GOID_TEST_001,Department of Finance,97.00,high,abbreviation_expansion,false
+Department of finance,Department of Finance,DOF,NYC_GOID_TEST_001,Department of Finance,100.00,exact,exact_name,false
+Deparment of Finance,Department of Finance,DOF,NYC_GOID_TEST_001,Department of Finance,79.52,medium,fuzzy,true
+NYC Finance Department,Department of Finance,DOF,NYC_GOID_TEST_001,NYC Department of Finance,95.00,high,abbreviation_expansion,false
+DSNY,Department of Sanitation,DSNY,NYC_GOID_TEST_002,DSNY,100.00,exact,exact_acronym,false
+Dept of Sanitation,Department of Sanitation,DSNY,NYC_GOID_TEST_002,Department of Sanitation,97.00,high,abbreviation_expansion,false
+NYC Sanitation,Department of Sanitation,DSNY,NYC_GOID_TEST_002,NYC Sanitation,100.00,exact,exact_alternate_name,false
+DOS,Department of Sanitation,DSNY,NYC_GOID_TEST_002,DOS,100.00,exact,exact_alternate_acronym,false
+Department of Education,Department of Education,DOE,NYC_GOID_TEST_003,Department of Education,100.00,exact,exact_name,false
+NYC Public Schools,Department of Education,DOE,NYC_GOID_TEST_003,NYC Public Schools,100.00,exact,exact_alternate_name,false
+NYPD,Police Department,NYPD,NYC_GOID_TEST_004,NYPD,100.00,exact,exact_acronym,false
+Fire Dept,Fire Department,FDNY,NYC_GOID_TEST_005,Fire Department,97.00,high,abbreviation_expansion,false
+Department of Health & Mental Hygiene,Department of Health and Mental Hygiene,DOHMH,NYC_GOID_TEST_006,Department of Health and Mental Hygiene,100.00,exact,exact_name,false
+DOH,Department of Health and Mental Hygiene,DOHMH,NYC_GOID_TEST_006,DOH,100.00,exact,exact_alternate_acronym,false
+Mayor's Office of Climate & Environmental Justice,Mayor's Office of Climate and Environmental Justice,MOCEJ,NYC_GOID_TEST_007,Mayor's Office of Climate and Environmental Justice,100.00,exact,exact_name,false
+MOCEJ,Mayor's Office of Climate and Environmental Justice,MOCEJ,NYC_GOID_TEST_007,MOCEJ,100.00,exact,exact_acronym,false
+DCAS,Department of Citywide Administrative Services,DCAS,NYC_GOID_TEST_008,DCAS,100.00,exact,exact_acronym,false
+Dept of Citywide Admin Services,Department of Citywide Administrative Services,DCAS,NYC_GOID_TEST_008,Department of Citywide Administrative Services,72.63,medium,fuzzy,true
+FDM,First Deputy Mayor,FDM,NYC_GOID_TEST_009,FDM,100.00,exact,exact_acronym,false
+DOB,Department of Buildings,DOB,NYC_GOID_TEST_010,DOB,100.00,exact,exact_acronym,false
+NYC Buildings,Department of Buildings,DOB,NYC_GOID_TEST_010,NYC Buildings,100.00,exact,exact_alternate_name,false
+Schrödinger's Department,Police Department,NYPD,NYC_GOID_TEST_004,Police Department,48.55,low,fuzzy,true
+,,,,,,none,no_match,true
+XYZ Agency,,,,,,none,no_match,true

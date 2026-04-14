@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nycresolver"
+version = "0.1.0"
+description = "Reconcile NYC agency names, acronyms, and identifiers against the canonical NYC Governance Organizations dataset."
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.9"
+authors = [
+    { name = "NYC Office of Data Analytics" },
+]
+keywords = ["nyc", "open-data", "entity-resolution", "fuzzy-matching", "socrata"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Text Processing :: Linguistic",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+]
+
+[project.scripts]
+nycresolver = "nycresolver.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/MODA-NYC/nyc-entity-resolver"
+Issues = "https://github.com/MODA-NYC/nyc-entity-resolver/issues"
+"Canonical Dataset" = "https://data.cityofnewyork.us/City-Government/NYC-Governance-Organizations/t3jq-9nkf"
+"Canonical Source Repo" = "https://github.com/MODA-NYC/nyc-governance-organizations"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+nycresolver = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
