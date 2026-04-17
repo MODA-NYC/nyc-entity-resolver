@@ -1,3 +1,7 @@
+## 🚧 Work in progress — this is an early-stage project under active development.
+## Code, data schemas, and documentation are subject to change. Not yet recommended for production use.
+## Feedback and issues welcome — please open an issue.
+
 # nyc-entity-resolver
 
 Reconcile NYC agency names, acronyms, and organizational identifiers against the
